@@ -65,6 +65,12 @@
 %else
 %global py_package_prefix python
 %global rhsm_package_name subscription-manager-rhsm
+
+%if !(0%{?suse_version})
+%global __python __python2
+%global python_sitearch %python2_sitearch
+%endif
+
 %endif
 
 %global _hardened_build 1
@@ -150,7 +156,7 @@ Source1: %{name}-cockpit-%{version}.tar.gz
 Source2: subscription-manager-rpmlintrc
 %endif
 
-%if 0%{?suse_version} < 1200
+%if 0%{?suse_version} && 0%{?suse_version} < 1200
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %endif
 
@@ -580,7 +586,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 # base/cli tools use the gettext domain 'rhsm', while the
 # gnome-help tools use domain 'subscription-manager'
 %files -f rhsm.lang
-%defattr(-,root,root,-)
 %if 0%{?suse_version}
 %dir %{_sysconfdir}/pki
 
@@ -792,7 +797,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 
 %if %{use_rhsm_gtk}
 %files -n rhsm-gtk
-%defattr(-,root,root,-)
 %dir %{python_sitearch}/subscription_manager/gui
 %{python_sitearch}/subscription_manager/gui/*.py*
 %{python_sitearch}/subscription_manager/gui/data/ui/*.ui
@@ -807,7 +811,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 %if %{use_subman_gui}
 #%files -n subscription-manager-gui -f subscription-manager.lang
 %files -n subscription-manager-gui
-%defattr(-,root,root,-)
 %attr(755,root,root) %{_sbindir}/subscription-manager-gui
 %if 0%{?suse_version}
 %dir %{python_sitearch}/subscription_manager/gui/data
@@ -862,7 +865,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 %if %use_initial_setup
 
 %files -n subscription-manager-initial-setup-addon
-%defattr(-,root,root,-)
 %dir %{_datadir}/anaconda/addons/com_redhat_subscription_manager/
 %{_datadir}/anaconda/addons/com_redhat_subscription_manager/*.py*
 %{_datadir}/anaconda/addons/com_redhat_subscription_manager/gui/*.py*
@@ -882,7 +884,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 
 
 %files -n subscription-manager-migration
-%defattr(-,root,root,-)
 %dir %{python_sitearch}/subscription_manager/migrate
 %{python_sitearch}/subscription_manager/migrate/*.py*
 %if %{with python3}
@@ -899,7 +900,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 
 %if %{with python3}
 %files -n %{py_package_prefix}-syspurpose
-%defattr(-,root,root,-)
 %dir %{python3_sitelib}/syspurpose*.egg-info
 %{python3_sitelib}/syspurpose*.egg-info/*
 %dir %{_sysconfdir}/rhsm/syspurpose
@@ -910,7 +910,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 %endif
 
 %files -n subscription-manager-plugin-container
-%defattr(-,root,root,-)
 %if 0%{?suse_version}
 %dir %{_sysconfdir}/docker
 %dir %{_sysconfdir}/docker/certs.d
@@ -932,7 +931,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 
 %if %has_ostree
 %files -n subscription-manager-plugin-ostree
-%defattr(-,root,root,-)
 %{_sysconfdir}/rhsm/pluginconf.d/ostree_content.OstreeContentPlugin.conf
 %{rhsm_plugins_dir}/ostree_content.py*
 %{python_sitearch}/subscription_manager/plugin/ostree/*.py*
@@ -944,7 +942,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 
 %if %use_firstboot
 %files -n subscription-manager-firstboot
-%defattr(-,root,root,-)
 %if 0%{?suse_version}
 %dir %{_datadir}/rhn
 %dir %{_datadir}/rhn/up2date_client
@@ -958,19 +955,16 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 
 %if %use_dnf
 %files -n dnf-plugin-subscription-manager
-%defattr(-,root,root,-)
 %{python_sitearch}/dnf-plugins/*
 %endif
 
 
 %files -n %{rhsm_package_name}
-%defattr(-,root,root,-)
 %dir %{python_sitearch}/rhsm
 %{python_sitearch}/rhsm/*
 
 %if %{with python2_rhsm}
 %files -n python2-subscription-manager-rhsm
-%defattr(-,root,root,-)
 %dir %{python2_sitearch}/rhsm
 %{python2_sitearch}/rhsm/*
 %endif
@@ -983,7 +977,6 @@ install -m 644 %{_builddir}/%{buildsubdir}/etc-conf/ca/redhat-uep.pem %{buildroo
 
 %if %use_cockpit
 %files -n subscription-manager-cockpit
-%defattr(-,root,root,-)
 %dir %{_datadir}/cockpit/subscription-manager
 %{_datadir}/cockpit/subscription-manager/index.html
 %{_datadir}/cockpit/subscription-manager/index.min.js.gz
@@ -1152,6 +1145,9 @@ gtk-update-icon-cache -f %{_datadir}/icons/hicolor &>/dev/null || :
 - 1576423: Polished changes provided in #1816 and added unit test.
   (jhnidek@redhat.com)
 
+* Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1.21.5-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
 * Fri Jun 22 2018 Christopher Snyder <csnyder@redhat.com> 1.22.1-1
 - 1571998: Ignore HTB repos (nmoumoul@redhat.com)
 - 1589296: subman list option --after now named --afterdate
@@ -1178,6 +1174,9 @@ gtk-update-icon-cache -f %{_datadir}/icons/hicolor &>/dev/null || :
 - 1510920: Allow access to job cancellation API (wpoteat@redhat.com)
 - ENT-447 Add icons to RPM package for subman cockpit plugin
   (jhnidek@redhat.com)
+
+* Tue Jun 19 2018 Miro Hrončok <mhroncok@redhat.com> - 1.21.5-2
+- Rebuilt for Python 3.7
 
 * Fri Jun 08 2018 Christopher Snyder <csnyder@redhat.com> 1.22.0-1
 - Remove F26 from releasers (Fedora 26 EOL) (csnyder@redhat.com)
