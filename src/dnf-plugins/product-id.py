@@ -24,6 +24,7 @@ from subscription_manager.injectioninit import init_dep_injection
 
 from dnfpluginscore import _, logger
 import dnf
+import dnf.base
 import librepo
 
 
@@ -52,8 +53,14 @@ class ProductId(dnf.Plugin):
         logutil.init_logger_for_yum()
         chroot(self.base.conf.installroot)
         try:
-            pm = DnfProductManager(self.base)
-            pm.update_all()
+            # We create own base object to get fresh list of installed packages
+            # and to get list of available packages after installing/removing,
+            # because base object from dnf.Plugin provides incomplete and obsolete data.
+            with dnf.base.Base() as base:
+                base.read_all_repos()
+                base.fill_sack(load_system_repo=True, load_available_repos=True)
+                pm = DnfProductManager(base)
+                pm.update_all()
             logger.info(_('Installed products updated.'))
         except Exception as e:
             logger.error(str(e))
